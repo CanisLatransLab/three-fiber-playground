@@ -8,14 +8,45 @@ function RotatingObjects() {
   const hexRef = useRef();
   const torusRef = useRef();
 
-  useFrame(() => {
-    if (sphereRef.current) sphereRef.current.rotation.y += 0.003;
-    if (hexRef.current) hexRef.current.rotation.z += 0.003;
-    if (torusRef.current) torusRef.current.rotation.y += 0.003;
+  // Create a 2D shape (the “path” to extrude)
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.lineTo(1, 0);
+  shape.lineTo(1, 1);
+  shape.lineTo(0, 1);
+  shape.closePath();
+
+  // Extrude settings
+  const extrudeSettings = {
+    depth: 0.3, // thickness
+    bevelEnabled: true,
+    bevelSegments: 4,
+    steps: 2,
+    bevelSize: 0.04,
+    bevelThickness: 0.04,
+  };
+
+  const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+  useFrame((state, delta) => {
+    if (sphereRef.current) sphereRef.current.rotation.y += delta * 0.5;
+    if (hexRef.current) hexRef.current.rotation.z += delta * 0.5;
+    if (torusRef.current) torusRef.current.rotation.y += delta * 0.5;
   });
 
   return (
     <>
+      <mesh geometry={geometry}>
+        <meshPhysicalMaterial
+          color={0xf2efe9}
+          roughness={0.95}
+          metalness={0.0}
+          sheen={0.2}
+          clearcoat={0.06}
+          clearcoatRoughness={0.6}
+          transmission={0}
+        />
+      </mesh>
       {/* Sphere */}
       <mesh ref={sphereRef}>
         <sphereGeometry args={[1, 64, 64]} />
@@ -76,13 +107,6 @@ function ThreeJsFiberPlayground() {
           fov: 45,
           near: 0.1,
           far: 100,
-        }}
-        gl={{
-          antialias: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          toneMappingExposure: 1.0,
-          outputColorSpace: THREE.SRGBColorSpace,
-          physicallyCorrectLights: true,
         }}>
         <RotatingObjects />
         <OrbitControls enableDamping target={[0, 0, 0]} />
